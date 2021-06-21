@@ -1,0 +1,77 @@
+(X: walls; .: paths; G: goal positions of cans; M: initial position of robot; J: initial positions of cans):
+
+XXXXXXXXXXXX
+XX...X....MX
+XX....J.JJ.X
+XXGG.XXJ..XX
+X.GG.X..XXXX
+X.......XXXX
+XXXXXXXXXXXX
+
+Solution (l,r,u,d(left,right,up,down); L,R,U,D(Left,Right,Up,Down while pushing a can)
+
+lll
+d
+LLLL 5
+backwards
+u
+l
+DD 3
+backwards
+u
+rrrr
+u
+rr
+D 2
+backwards
+llll
+ddd
+rr
+u
+r
+U 2
+backwards
+dd
+lll
+uuu
+rr
+u
+rr
+d
+LLLL 5
+backwards
+u
+l
+DD 3
+backwards
+u
+rrr
+u
+rrrr
+d
+LLLLLLL 7
+backwards
+u
+l
+D 2
+backwards
+rrrrrrr 
+d
+L 2
+backwards
+u
+llll
+ddd
+rr
+u
+r
+U 2
+backwards
+r
+u
+LLLL 5
+backwards
+u
+l
+D 2
+backwards
