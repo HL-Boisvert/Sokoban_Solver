@@ -10,7 +10,7 @@
 #Convert DFS solution to instructions for robot using path-finding
 
 import copy
-
+import pygame
 
 class ListNode(object):
     def __init__(self, val,pushList):
@@ -367,7 +367,6 @@ class Tree():
                 listOfChildren.append(newChild)
                 #print("dest3",listOfChildren[len(listOfChildren)-1].getPositionsCans()[i])
 
-
         flag = 0
         for j in range (len(node.getPositionsCans())):
             if node.getPositionsCans()[j] == destination4:  #If there's a can at the destination
@@ -430,7 +429,7 @@ class Tree():
                 self.visited = LinkedList(self.root.getPositionsCans(),self.root.getPushList())
 
                 if condition == 1:
-                    return(self.solutionNode.getPushList())
+                    return(self.solutionNode)
                 else:
                     return("Value not found")
 
@@ -467,7 +466,6 @@ class Tree():
                     #print("went to NonFirstChild")
                     #print('currentNode positionCans',self.currentNode.getPositionsCans())
                     #print("currentNode Pushlist",self.currentNode.getPushList())
-
 
                 elif self.currentNode.getRightSibling() != None and self.isVisited(self.currentNode.getRightSibling().getPositionsCans()) == False:
                     # sibling --> right_sibling (not yet visited)
@@ -513,8 +511,106 @@ class Tree():
         print("Need to increase search cap")
 
 
+
+class Node():
+    """A node class for A* Pathfinding"""
+
+    def __init__(self, parent=None, position=None):
+        self.parent = parent
+        self.position = position
+
+        self.g = 0
+        self.h = 0
+        self.f = 0
+
+    def __eq__(self, other):
+        return self.position == other.position
+
+def astar(map, start, end):
+    """Returns a list of tuples as a path from the given start to the given end in the given map"""
+
+    # Create start and end node
+    start_node = Node(None, start)
+    start_node.g = start_node.h = start_node.f = 0
+    end_node = Node(None, end)
+    end_node.g = end_node.h = end_node.f = 0
+
+    # Initialize both open and closed list
+    open_list = []
+    closed_list = []
+
+    # Add the start node
+    open_list.append(start_node)
+
+    # Loop until you find the end
+    while len(open_list) > 0:
+
+        # Get the current node
+        current_node = open_list[0]
+        current_index = 0
+        for index, item in enumerate(open_list):
+            if item.f < current_node.f:
+                current_node = item
+                current_index = index
+
+        # Pop current off open list, add to closed list
+        open_list.pop(current_index)
+        closed_list.append(current_node)
+
+        # Found the goal
+        if current_node == end_node:
+            path = []
+            current = current_node
+            while current is not None:
+                path.append(current.position)
+                current = current.parent
+            return path[::-1] # Return reversed path
+
+        # Generate children
+        children = []
+        for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0)]: # Adjacent squares
+
+            # Get node position
+            node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
+
+            # Make sure within range
+            if node_position[0] > (len(map) - 1) or node_position[0] < 0 or node_position[1] > (len(map[len(map)-1]) -1) or node_position[1] < 0:
+                continue
+
+            # Make sure walkable terrain
+            if map[node_position[0]][node_position[1]] != 0:
+                continue
+
+            # Create new node
+            new_node = Node(current_node, node_position)
+
+            # Append
+            children.append(new_node)
+
+        # Loop through children
+        for child in children:
+
+            # Child is on the closed list
+            for closed_child in closed_list:
+                if child == closed_child:
+                    continue
+
+            # Create the f, g, and h values
+            child.g = current_node.g + 1
+            child.h = ((child.position[0] - end_node.position[0]) ** 2) + ((child.position[1] - end_node.position[1]) ** 2)
+            child.f = child.g + child.h
+
+            # Child is already in the open list
+            for open_node in open_list:
+                if child == open_node and child.g > open_node.g:
+                    continue
+
+            # Add the child to the open list
+            open_list.append(child)
+
+
 class main():
-    root = TreeNode([1,10],[[2,8],[2,6],[2,9],[3,7]],[])
+    root = TreeNode([1,10],[[2,8],[2,6]],[])
     root.setDepth(0)
     maxDepth = 1000
 
@@ -526,10 +622,59 @@ class main():
              [1,0,0,0,0,0,0,0,1,1,1,1],
              [1,1,1,1,1,1,1,1,1,1,1,1]]
 
-    positionsCansSolution = [[4,2],[4,3],[3,2],[3,3]]
+
+    positionsCansSolution = [[4,2],[4,3]]
     mapSize = [6,11]
     t = Tree(root,walls,mapSize,positionsCansSolution)
-    print(t.childDepthFirstSearch(positionsCansSolution,walls,mapSize,maxDepth))
 
+    def buildPath(list,walls):
+        path = []
+        wallsTemp = walls
+        for i in range (0,len(list)-1):
+            wallsTemp = walls
+            for j in range (len(positionsCansSolution)):
+                wallsTemp[list[i][0][0][0]][list[i][0][0][1]] = 1
+            p1 = astar(wallsTemp,(list[i][0][0][0],list[i][0][0][1]),(list[i+1][0][0][0],list[i+1][0][0][1]))
+            for k in range (len(p1)):
+                path.append(p1[k])
+
+        try:
+            for i in range(len(path)):
+                if (path[i+1] == path[i]):
+                    del path[i]
+        except IndexError:
+            return path
+
+
+    path = buildPath(t.childDepthFirstSearch(positionsCansSolution,walls,mapSize,maxDepth).getPushList(),walls)
+    print(path)
 
 main()
+
+BLACK = (0, 0, 0)
+WHITE = (200, 200, 200)
+WINDOW_HEIGHT = 800
+WINDOW_WIDTH = 800
+
+def UI():
+    global SCREEN, CLOCK
+    pygame.init()
+    SCREEN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    CLOCK = pygame.time.Clock()
+    SCREEN.fill(BLACK)
+
+    while True:
+        drawGrid()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+        pygame.display.update()
+
+def drawGrid():
+    blockSize = 80 #Set the size of the grid block
+    for x in range(0, WINDOW_WIDTH, blockSize):
+        for y in range(0, WINDOW_HEIGHT, blockSize):
+            rect = pygame.Rect(x, y, blockSize, blockSize)
+            pygame.draw.rect(SCREEN, WHITE, rect, 1)
