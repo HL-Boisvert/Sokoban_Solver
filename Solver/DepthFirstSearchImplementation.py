@@ -117,9 +117,10 @@ class TreeNode:
       pushList
           [[[InitialPositionPush1],[FinalPositionPush1]],...]
       '''
-    def __init__(self, positionRobot, positionsCans, pushList):
+    def __init__(self, positionRobot, positionsCans, pushList, positionsCansList):
         self.positionRobot = positionRobot
         self.positionsCans = positionsCans
+        self.positionsCansList = positionsCansList
         self.pushList = pushList
         self.parent = None
         self.leftSibling = None
@@ -174,6 +175,12 @@ class TreeNode:
 
     def setDepth(self,depth):
         self.depth = depth
+
+    def getPositionsCansList(self):
+        return self.positionsCansList
+
+    def setPositionsCansList(self, positionsCansList):
+        self.positionsCansList = positionsCansList
 
 
 class Tree():
@@ -326,8 +333,9 @@ class Tree():
                 positionRobot = copy.copy(node.getPositionsCans()[i])
                 updatedPositionsCans = copy.copy(node.getPositionsCans())
                 updatedPositionsCans[i] = destination1
-                newChild = TreeNode(positionRobot,updatedPositionsCans,copy.copy(node.getPushList()))
+                newChild = TreeNode(positionRobot,updatedPositionsCans,copy.copy(node.getPushList()),copy.copy(node.getPositionsCansList()))
                 newChild.getPushList().append([[positionRobot],[updatedPositionsCans[i]]])
+                newChild.getPositionsCansList().append(updatedPositionsCans)
                 listOfChildren.append(newChild)
                 #print("dest1",listOfChildren[len(listOfChildren)-1].getPositionsCans()[i])
 
@@ -345,8 +353,9 @@ class Tree():
                 positionRobot = copy.copy(node.getPositionsCans()[i])
                 updatedPositionsCans = copy.copy(node.getPositionsCans())
                 updatedPositionsCans[i] = destination2
-                newChild = TreeNode(positionRobot,updatedPositionsCans,copy.copy(node.getPushList()))
+                newChild = TreeNode(positionRobot,updatedPositionsCans,copy.copy(node.getPushList()),copy.copy(node.getPositionsCansList()))
                 newChild.getPushList().append([[positionRobot],[updatedPositionsCans[i]]])
+                newChild.getPositionsCansList().append(updatedPositionsCans)
                 listOfChildren.append(newChild)
                 #print("dest2",listOfChildren[len(listOfChildren)-1].getPositionsCans()[i])
 
@@ -362,8 +371,9 @@ class Tree():
                 positionRobot = copy.copy(node.getPositionsCans()[i])
                 updatedPositionsCans = copy.copy(node.getPositionsCans())
                 updatedPositionsCans[i] = destination3
-                newChild = TreeNode(positionRobot,updatedPositionsCans,copy.copy(node.getPushList()))
+                newChild = TreeNode(positionRobot,updatedPositionsCans,copy.copy(node.getPushList()),copy.copy(node.getPositionsCansList()))
                 newChild.getPushList().append([[positionRobot],[updatedPositionsCans[i]]])
+                newChild.getPositionsCansList().append(updatedPositionsCans)
                 listOfChildren.append(newChild)
                 #print("dest3",listOfChildren[len(listOfChildren)-1].getPositionsCans()[i])
 
@@ -379,8 +389,9 @@ class Tree():
                 positionRobot = copy.copy(node.getPositionsCans()[i])
                 updatedPositionsCans = copy.copy(node.getPositionsCans())
                 updatedPositionsCans[i] = destination4
-                newChild = TreeNode(positionRobot,updatedPositionsCans,copy.copy(node.getPushList()))
+                newChild = TreeNode(positionRobot,updatedPositionsCans,copy.copy(node.getPushList()),copy.copy(node.getPositionsCansList()))
                 newChild.getPushList().append([[positionRobot],[updatedPositionsCans[i]]])
+                newChild.getPositionsCansList().append(updatedPositionsCans)
                 listOfChildren.append(newChild)
 
     def findSuccessor(self,node,wallsPositions,deadlockList,cansPositionsSolution):
@@ -610,7 +621,7 @@ def astar(map, start, end):
 
 
 class main():
-    root = TreeNode([1,10],[[2,8],[2,6]],[])
+    root = TreeNode([1,10],[[2,8],[2,6]],[],[[2,8],[2,6]])
     root.setDepth(0)
     maxDepth = 1000
 
@@ -627,17 +638,21 @@ class main():
     mapSize = [6,11]
     t = Tree(root,walls,mapSize,positionsCansSolution)
 
-    def buildPath(list,walls):
+    def buildPath(solutionNode,walls,root,mapSize):
         path = []
-        wallsTemp = walls
-        for i in range (0,len(list)-1):
+
+        for i in range (0,len(solutionNode.getPushList())-1):
             wallsTemp = walls
-            for j in range (len(positionsCansSolution)):
-                wallsTemp[list[i][0][0][0]][list[i][0][0][1]] = 1
-            p1 = astar(wallsTemp,(list[i][0][0][0],list[i][0][0][1]),(list[i+1][0][0][0],list[i+1][0][0][1]))
+            for j in range(len(root.getPositionsCans())):
+                for k in range(mapSize[0]+1):
+                    for l in range(mapSize[1]+1):
+                        if (solutionNode.getPositionsCansList()[i+2][j][0] == k and solutionNode.getPositionsCansList()[i+2][j][1] == l):
+                            wallsTemp[k][l] = 1
+
+            p1 = astar(wallsTemp,(solutionNode.getPushList()[i][0][0][0],solutionNode.getPushList()[i][0][0][1]),\
+            (solutionNode.getPushList()[i+1][0][0][0],solutionNode.getPushList()[i+1][0][0][1]))
             for k in range (len(p1)):
                 path.append(p1[k])
-
         try:
             for i in range(len(path)):
                 if (path[i+1] == path[i]):
@@ -645,9 +660,9 @@ class main():
         except IndexError:
             return path
 
-
-    path = buildPath(t.childDepthFirstSearch(positionsCansSolution,walls,mapSize,maxDepth).getPushList(),walls)
+    path = buildPath(t.childDepthFirstSearch(positionsCansSolution,walls,mapSize,maxDepth),walls,root,mapSize)
     print(path)
+
 
 main()
 
